@@ -17,7 +17,8 @@ function Resolve-PathOrEnv {
         if ($resolvedPath -and (Test-Path -Path $resolvedPath)) {
             $inputFileReolved = "$resolvedPath\php.ini"
         } else {
-            throw "Provide a valide environment variable or full path for a php directory !"
+            Write-Host "Provide a valide environment variable or full path for a php directory !" -BackgroundColor "Yellow"
+            exit(0)
         }
     }
 
@@ -83,6 +84,13 @@ foreach ($line in $fileContent) {
 # Write the modified content back to the php.ini file
 $newContent | Set-Content -Path $phpIniPath
 
-$msg = If ($activate) { "activated" } Else { "deactivated" }
-Write-Host " xdebug has been $msg " -BackgroundColor Green
+If ($activate) {
+    $msg = "activated"
+    $color = "Green"
+} Else {
+    $msg = "deactivated"
+    $color = "Yellow"
+}
+
+Write-Host " xdebug has been $msg " -BackgroundColor $color
 
