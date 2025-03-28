@@ -43,37 +43,44 @@ function Is-BranchUpToDate {
     }
 }
 
+function Push-To-Remote {
+    param (
+        [string]$branch,
+        [string]$RemoteArray
+    )
+    
+    foreach ($remote in $RemoteArray) {
+        git push $remote $branch
+    }
+}
+
 # Push the current branch
 Write-Host "Pushing the current branch '$CurrentBranch' to remote..." -ForegroundColor Cyan
-foreach ($remote in $RemoteArray) {
-    git push $remote $CurrentBranch
-}
+Push-To-Remote -branch $CurrentBranch -RemoteArray $RemoteArray
 
 # Iterate over the list of branches
 foreach ($branch in $BranchArray) {
     if ($branch -eq $CurrentBranch) {
-        Write-Host "Skipping the current branch '$CurrentBranch'." -ForegroundColor Yellow
+        Write-Host "`nSkipping the current branch '$CurrentBranch'." -ForegroundColor Yellow
         continue
     }
     
     if (Is-BranchUpToDate -branch $branch) {
-        Write-Host "Branch $branch is up-to-date with the remote. Skipping merge."
+        Write-Host "`nBranch $branch is up-to-date with the remote. Skipping merge."
     } else {
-        Write-Host "Checking out branch '$branch'..." -ForegroundColor Cyan
+        Write-Host "`nChecking out branch '$branch'..." -ForegroundColor Cyan
         git checkout $branch
 
         Write-Host "Merging '$CurrentBranch' into '$branch'..." -ForegroundColor Cyan
         git merge $CurrentBranch
 
         Write-Host "Pushing branch '$branch' to remote..." -ForegroundColor Cyan
-        foreach ($remote in $RemoteArray) {
-            git push $remote $CurrentBranch
-        }
+        Push-To-Remote -branch $branch -RemoteArray $RemoteArray
     }
 }
 
 # Switch back to the original branch
-Write-Host "Switching back to the original branch '$CurrentBranch'..." -ForegroundColor Cyan
+Write-Host "`nSwitching back to the original branch '$CurrentBranch'..." -ForegroundColor Cyan
 git checkout $CurrentBranch
 
 Write-Host "Operation completed successfully!" -ForegroundColor Green
