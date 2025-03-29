@@ -26,27 +26,10 @@ if (-not $BranchArray -or $BranchArray.Count -eq 0) {
     exit 1
 }
 
-function Is-BranchUpToDate {
-    param (
-        [string]$branch
-    )
-    
-    # Get the local and remote commit hashes
-    $localHash = git rev-parse $branch
-    $remoteHash = git rev-parse origin/$branch
-
-    # Compare the hashes
-    if ($localHash -eq $remoteHash) {
-        return $true
-    } else {
-        return $false
-    }
-}
-
 function Push-To-Remote {
     param (
-        [string]$branch,
-        [string]$RemoteArray
+        $branch,
+        $RemoteArray
     )
     
     foreach ($remote in $RemoteArray) {
@@ -65,18 +48,14 @@ foreach ($branch in $BranchArray) {
         continue
     }
     
-    if (Is-BranchUpToDate -branch $branch) {
-        Write-Host "`nBranch $branch is up-to-date with the remote. Skipping merge."
-    } else {
-        Write-Host "`nChecking out branch '$branch'..." -ForegroundColor Cyan
-        git checkout $branch
+    Write-Host "`nChecking out branch '$branch'..." -ForegroundColor Cyan
+    git checkout $branch
 
-        Write-Host "Merging '$CurrentBranch' into '$branch'..." -ForegroundColor Cyan
-        git merge $CurrentBranch
+    Write-Host "Merging '$CurrentBranch' into '$branch'..." -ForegroundColor Cyan
+    git merge $CurrentBranch
 
-        Write-Host "Pushing branch '$branch' to remote..." -ForegroundColor Cyan
-        Push-To-Remote -branch $branch -RemoteArray $RemoteArray
-    }
+    Write-Host "Pushing branch '$branch' to remote..." -ForegroundColor Cyan
+    Push-To-Remote -branch $branch -RemoteArray $RemoteArray
 }
 
 # Switch back to the original branch
