@@ -1,7 +1,8 @@
 param (
     [string]$GitHubToken,
     [string]$RepoName,
-    [string]$GitHubUsername = "drissboumlik"
+    [string]$GitHubUsername = "drissboumlik",
+    [int]$withAllBranches = 0
 )
 
 # GitHub API endpoint
@@ -24,4 +25,8 @@ Invoke-RestMethod -Uri $GitHubApiUrl -Method Post -Headers $Headers -Body $Body
 git remote add origin "https://github.com/$GitHubUsername/$RepoName.git"
 
 # Push to GitHub
-git push -u origin master
+if ($withAllBranches) {
+    git push --all origin
+} else {
+    git push -u origin master
+}
