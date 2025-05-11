@@ -1,33 +1,69 @@
 param([string]$operation)
 
+function Is-Admin {
+    $currentIdentity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object System.Security.Principal.WindowsPrincipal($currentIdentity)
+    return $principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
 $actions = [ordered]@{
-    "start" = @{action = {
-        Start-Service "MariaDB"
-        Write-Host "MariaDB service started." -ForegroundColor Green
-    }}
-    "stop" = @{action = {
-        Stop-Service "MariaDB"
-        Write-Host "MariaDB service stopped." -ForegroundColor Yellow
-    }}
-    "restart" = @{action = {
-        Restart-Service "MariaDB"
-        Write-Output "MariaDB service restarted."
-    }}
-    "status" = @{action = {
+    "start" = @{ action = {
+        Start-Service "MariaDB"; return $true
+    }; success = "MariaDB service started."; failure = "Failed to start MariaDB service." }
+
+    "stop" = @{ action = {
+        Stop-Service "MariaDB"; return $true
+    }; success = "MariaDB service stopped."; failure = "Failed to stop MariaDB service." }
+
+    "restart" = @{ action = {
+        Restart-Service "MariaDB"; return $true
+    }; success = "MariaDB service restarted."; failure = "Failed to restart MariaDB service." }
+
+    "status" = @{ action = {
         $service = Get-Service "MariaDB"
         if ($service.Status -eq 'Running') {
             Write-Host "MariaDB service is running." -ForegroundColor Green
         } else {
             Write-Host "MariaDB service is stopped." -ForegroundColor Yellow
         }
+        return $true
     }}
 }
 
 Write-Host "`n"
 
 if (-not $actions.Contains($operation)) {
-    Write-Output "Usage: mysql [start|stop|restart|status]"
-    exit 0
+    Write-Host "Usage: mysql.ps1 [start|stop|restart|status]"
+    exit $true
 }
 
-$actions[$operation].action.Invoke()
+# If already admin, run the action directly
+if (($operation -eq "status") -or (Is-Admin)) {
+    $exitCode = $actions[$operation].action.Invoke()
+    if ($exitCode -eq $true) {
+        Write-Host $actions[$operation].success -ForegroundColor Green
+    } else {
+        Write-Host $actions[$operation].failure -ForegroundColor Yellow
+    }
+    exit $exitCode
+}
+
+# Not admin - relaunch as admin
+try {
+    $arguments = "-ExecutionPolicy Bypass -File `"$PSCommandPath`" use `"$operation`""
+    $process = Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden -PassThru  
+    $process.WaitForExit()
+    $exitCode = $process.ExitCode
+
+    if ($exitCode -eq 0) {
+        Write-Host $actions[$operation].success -ForegroundColor Green
+    } else {
+        Write-Host $actions[$operation].failure -ForegroundColor Yellow
+    }
+
+    exit $exitCode
+}
+catch {
+    Write-Host "Operation canceled or failed to elevate privileges." -ForegroundColor Yellow
+    exit 1
+}
