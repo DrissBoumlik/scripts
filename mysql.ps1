@@ -50,7 +50,7 @@ if (($operation -eq "status") -or (Is-Admin)) {
 
 # Not admin - relaunch as admin
 try {
-    $arguments = "-ExecutionPolicy Bypass -File `"$PSCommandPath`" use `"$operation`""
+    $arguments = "-ExecutionPolicy Bypass -File `"$PSCommandPath`" `"$operation`""
     $process = Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden -PassThru  
     $process.WaitForExit()
     $exitCode = $process.ExitCode
