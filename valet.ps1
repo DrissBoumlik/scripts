@@ -1,10 +1,12 @@
-param([ValidateSet("start", "stop", "restart", "status")][string]$operation)
+param([string]$operation)
 
-$messages = @{
-    start   = "Valet services have been started."
-    stop    = "Valet services have been stopped."
-    restart = "Valet services have been restarted."
-    status = "Valet services status displayed."
+. $PSScriptRoot\common\functions.ps1
+
+$messages = [ordered]@{
+    "start"   = "Valet services have been started."
+    "stop"    = "Valet services have been stopped."
+    "restart" = "Valet services have been restarted."
+    "status"  = "Valet services status displayed."
 }
 
 if (-not $messages.Contains($operation)) {
@@ -17,33 +19,20 @@ if ($operation -eq "status") {
     $services = @("valet_phpcgi_xdebug", "valet_phpcgi", "valet_nginx")
 
     Write-Host "`n"
-    foreach ($s in $services) {
-        try {
-            $service = Get-Service -Name $s -ErrorAction Stop
-            $color = if ($service.Status -eq 'Running') { 'Green' } else { 'Yellow' }
-            Write-Host "$s is $($service.Status)." -ForegroundColor $color
-        } catch {
-            Write-Host "$s not found or failed to get status." -ForegroundColor Yellow
-        }
-    }
+    Display-Service-Status -servicesNames $services
     
     exit 0
 }
 
-function Is-Admin {
-    $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
-    $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
-    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-}
 
 function Display-Output-Message {
     param($exitCode, $operation)
 
     if ($exitCode -eq 0) {
         $message = $messages[$operation]
-        Write-Host "`n$message" -ForegroundColor Green
+        Write-Host "`n$message" -ForegroundColor DarkGreen
     } else {
-        Write-Host "`nvalet $operation failed with code $exitCode." -ForegroundColor Yellow
+        Write-Host "`nvalet $operation failed with code $exitCode." -ForegroundColor DarkYellow
     }
 
     exit $exitCode
@@ -54,7 +43,7 @@ function Display-Output-Message {
 $valetBat = "$env:APPDATA\Composer\vendor\bin\valet.bat"
 
 if (-not (Test-Path $valetBat)) {
-    Write-Host "`nOups! Could not find valet.bat at:" -ForegroundColor Yellow
+    Write-Host "`nOups! Could not find valet.bat at:" -ForegroundColor DarkYellow
     Write-Host $valetBat
     exit 1
 }
@@ -75,7 +64,7 @@ if (-not (Is-Admin)) {
         Display-Output-Message -exitCode $proc.ExitCode -operation $operation
         
     } catch {
-        Write-Host "`nOups! Admin elevation was cancelled or failed." -ForegroundColor Yellow
+        Write-Host "`nOups! Admin elevation was cancelled or failed." -ForegroundColor DarkYellow
         exit 1
     }
 }

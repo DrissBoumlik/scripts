@@ -1,10 +1,6 @@
 param([string]$operation)
 
-function Is-Admin {
-    $currentIdentity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
-    $principal = New-Object System.Security.Principal.WindowsPrincipal($currentIdentity)
-    return $principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
-}
+. $PSScriptRoot\common\functions.ps1
 
 $actions = [ordered]@{
     "start" = @{ action = {
@@ -20,12 +16,7 @@ $actions = [ordered]@{
     }; success = "MariaDB service restarted."; failure = "Failed to restart MariaDB service." }
 
     "status" = @{ action = {
-        $service = Get-Service "MariaDB"
-        if ($service.Status -eq 'Running') {
-            Write-Host "MariaDB service is running." -ForegroundColor Green
-        } else {
-            Write-Host "MariaDB service is stopped." -ForegroundColor Yellow
-        }
+        Display-Service-Status -servicesNames @("MariaDB")
         return $true
     }}
 }
@@ -41,9 +32,9 @@ if (-not $actions.Contains($operation)) {
 if (($operation -eq "status") -or (Is-Admin)) {
     $exitCode = $actions[$operation].action.Invoke()
     if ($exitCode -eq $true) {
-        Write-Host $actions[$operation].success -ForegroundColor Green
+        Write-Host $actions[$operation].success -ForegroundColor DarkGreen
     } else {
-        Write-Host $actions[$operation].failure -ForegroundColor Yellow
+        Write-Host $actions[$operation].failure -ForegroundColor DarkYellow
     }
     exit $exitCode
 }
@@ -56,14 +47,14 @@ try {
     $exitCode = $process.ExitCode
 
     if ($exitCode -eq 0) {
-        Write-Host $actions[$operation].success -ForegroundColor Green
+        Write-Host $actions[$operation].success -ForegroundColor DarkGreen
     } else {
-        Write-Host $actions[$operation].failure -ForegroundColor Yellow
+        Write-Host $actions[$operation].failure -ForegroundColor DarkYellow
     }
 
     exit $exitCode
 }
 catch {
-    Write-Host "Operation canceled or failed to elevate privileges." -ForegroundColor Yellow
+    Write-Host "Operation canceled or failed to elevate privileges." -ForegroundColor DarkYellow
     exit 1
 }
