@@ -12,18 +12,24 @@ function Display-Service-Status {
 
     $maxLineLength = 60
     foreach ($serviceName in $servicesNames) {
+            $serviceNameFormatted = $serviceName
         try {
+            if ($serviceNameFormatted -match '[_-]') {
+                $serviceNameFormatted = ($serviceName -replace '_', ' ' -split ' ' | ForEach-Object {
+                    $_.Substring(0,1).ToUpper() + $_.Substring(1).ToLower()
+                }) -join ' '
+            }
             $service = Get-Service -Name $serviceName -ErrorAction Stop
             $color = if ($service.Status -eq 'Running') { 'DarkGreen' } else { 'DarkYellow' }
-            $dotsCount = $maxLineLength - $ServiceName.Length
+            $dotsCount = $maxLineLength - $serviceNameFormatted.Length
             if ($dotsCount -lt 0) { $dotsCount = 0 }
 
             $dots = '.' * $dotsCount
-            Write-Host "$ServiceName $dots " -NoNewline
+            Write-Host "$serviceNameFormatted $dots " -NoNewline
             Write-Host $service.Status -ForegroundColor $color
         } catch {
-            $dots = '.' * ($maxLineLength - $ServiceName.Length)
-            Write-Host "$ServiceName $dots " -NoNewline
+            $dots = '.' * ($maxLineLength - $serviceNameFormatted.Length)
+            Write-Host "$serviceNameFormatted $dots " -NoNewline
             Write-Host "NOT FOUND" -ForegroundColor Yellow
         }
     }
