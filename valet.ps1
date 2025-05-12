@@ -1,4 +1,34 @@
-param([string]$operation)
+param([ValidateSet("start", "stop", "restart", "status")][string]$operation)
+
+$messages = @{
+    start   = "Valet services have been started."
+    stop    = "Valet services have been stopped."
+    restart = "Valet services have been restarted."
+    status = "Valet services status displayed."
+}
+
+if (-not $messages.Contains($operation)) {
+    Write-Host "`nUsage: valet.ps1 [start|stop|restart|status]"
+    exit 1
+}
+
+
+if ($operation -eq "status") {
+    $services = @("valet_phpcgi_xdebug", "valet_phpcgi", "valet_nginx")
+
+    Write-Host "`n"
+    foreach ($s in $services) {
+        try {
+            $service = Get-Service -Name $s -ErrorAction Stop
+            $color = if ($service.Status -eq 'Running') { 'Green' } else { 'Yellow' }
+            Write-Host "$s is $($service.Status)." -ForegroundColor $color
+        } catch {
+            Write-Host "$s not found or failed to get status." -ForegroundColor Yellow
+        }
+    }
+    
+    exit 0
+}
 
 function Is-Admin {
     $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -6,100 +36,66 @@ function Is-Admin {
     return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
-$services = @(
-    "valet_phpcgi_xdebug",
-    "valet_phpcgi",
-    "valet_nginx"
-)
+function Display-Output-Message {
+    param($exitCode, $operation)
 
-$actions = [ordered]@{
-    "start" = @{ action = {
-            foreach ($s in $services) {
-                try {
-                    Start-Service -Name $s -ErrorAction Stop
-                    Write-Host "Started $s." -ForegroundColor Green
-                } catch {
-                    Write-Host "Failed to start $s" -ForegroundColor Red
-                }
-            }
-            return 0
-        }; success = "Valet services started."; failure = "Failed to start some services."}
-
-    "stop" = @{ action = {
-            foreach ($s in $services) {
-                try {
-                    Stop-Service -Name $s -ErrorAction Stop
-                    Write-Host "Stopped $s." -ForegroundColor Yellow
-                } catch {
-                    Write-Host "Failed to stop $s" -ForegroundColor Red
-                }
-            }
-            return 0
-        }; success = "Valet services stopped."; failure = "Failed to stop some services."}
-
-    "restart" = @{ action = {
-            foreach ($s in $services) {
-                try {
-                    Restart-Service -Name $s -ErrorAction Stop
-                    Write-Host "Restarted $s." -ForegroundColor Cyan
-                } catch {
-                    Write-Host "Failed to restart $s" -ForegroundColor Red
-                }
-            }
-            return 0
-        }; success = "Valet services restarted."; failure = "Failed to restart some services."}
-
-    "status" = @{ action = {
-            foreach ($s in $services) {
-                try {
-                    $service = Get-Service -Name $s -ErrorAction Stop
-                    $color = if ($service.Status -eq 'Running') { 'Green' } else { 'Yellow' }
-                    Write-Host "$s is $($service.Status)." -ForegroundColor $color
-                } catch {
-                    Write-Host "$s not found or failed to get status." -ForegroundColor Red
-                }
-            }
-            return 0
-        }}
-}
-
-Write-Host "`n"
-
-if (-not $actions.Contains($operation)) {
-    Write-Host "Usage: valet.ps1 [start|stop|restart|status]"
-    exit 1
-}
-
-
-# If already admin, run the action directly
-if (($operation -eq "status") -or (Is-Admin)) {
-    $exitCode = & $actions[$operation].action
-
-    if ($exitCode -eq 0 -and $actions[$operation].success) {
-        Write-Host $actions[$operation].success -ForegroundColor Green
-    } elseif ($actions[$operation].failure) {
-        Write-Host $actions[$operation].failure -ForegroundColor Red
+    if ($exitCode -eq 0) {
+        $message = $messages[$operation]
+        Write-Host "`n$message" -ForegroundColor Green
+    } else {
+        Write-Host "`nvalet $operation failed with code $exitCode." -ForegroundColor Yellow
     }
 
     exit $exitCode
 }
-    
 
-try {
-    $arguments = "-ExecutionPolicy Bypass -File `"$PSCommandPath`" `"$operation`""
-    $process = Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden -PassThru  
-    $process.WaitForExit()
-    $exitCode = $process.ExitCode
 
-    if ($exitCode -eq 0 -and $actions[$operation].success) {
-        Write-Host $actions[$operation].success -ForegroundColor Green
-    } elseif ($actions[$operation].failure) {
-        Write-Host $actions[$operation].failure -ForegroundColor Red
-    }
+# Path to valet.bat
+$valetBat = "$env:APPDATA\Composer\vendor\bin\valet.bat"
 
-    exit $exitCode
-} catch {
-    Write-Host "Operation cancelled or failed to elevate." -ForegroundColor Red
+if (-not (Test-Path $valetBat)) {
+    Write-Host "`nOups! Could not find valet.bat at:" -ForegroundColor Yellow
+    Write-Host $valetBat
     exit 1
 }
 
+# Relaunch as Admin if not already
+if (-not (Is-Admin)) {
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = "powershell"
+    $psi.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" $operation"
+    $psi.Verb = "runas"
+    $psi.WindowStyle = "Hidden"
+    $psi.UseShellExecute = $true
+
+    try {
+        $proc = [System.Diagnostics.Process]::Start($psi)
+        $proc.WaitForExit()
+        
+        Display-Output-Message -exitCode $proc.ExitCode -operation $operation
+        
+    } catch {
+        Write-Host "`nOups! Admin elevation was cancelled or failed." -ForegroundColor Yellow
+        exit 1
+    }
+}
+
+# Run valet command
+$startInfo = New-Object System.Diagnostics.ProcessStartInfo
+$startInfo.FileName = $valetBat
+$startInfo.Arguments = $operation
+$startInfo.RedirectStandardOutput = $true
+$startInfo.RedirectStandardError = $true
+$startInfo.UseShellExecute = $false
+$startInfo.CreateNoWindow = $true
+
+$proc = New-Object System.Diagnostics.Process
+$proc.StartInfo = $startInfo
+$proc.Start() | Out-Null
+
+$output = $proc.StandardOutput.ReadToEnd()
+$errorOutput = $proc.StandardError.ReadToEnd()
+$proc.WaitForExit()
+
+
+Display-Output-Message -exitCode $proc.ExitCode -operation $operation
