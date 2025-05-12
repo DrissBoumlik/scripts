@@ -10,27 +10,21 @@ function Is-Admin {
 function Display-Service-Status {
     param($servicesNames)
 
-    # Define fixed column widths
-    $nameWidth = 22
-    $statusWidth = 12
-
-    Write-Host ("-" * ($nameWidth + $statusWidth + 7))
-    Write-Host ("| {0,-$nameWidth} | {1,-$statusWidth} |" -f "Service", "Status")
-    Write-Host ("-" * ($nameWidth + $statusWidth + 7))
-
+    $maxLineLength = 60
     foreach ($serviceName in $servicesNames) {
         try {
             $service = Get-Service -Name $serviceName -ErrorAction Stop
             $color = if ($service.Status -eq 'Running') { 'DarkGreen' } else { 'DarkYellow' }
-            $serviceLine = "| {0,-$nameWidth} | " -f $service.ServiceName
-            Write-Host -NoNewline $serviceLine
-            Write-Host -NoNewline ($service.Status.ToString().PadRight($statusWidth)) -ForegroundColor $color
-            Write-Host " |"
+            $dotsCount = $maxLineLength - $ServiceName.Length
+            if ($dotsCount -lt 0) { $dotsCount = 0 }
+
+            $dots = '.' * $dotsCount
+            Write-Host "$ServiceName $dots " -NoNewline
+            Write-Host $service.Status -ForegroundColor $color
         } catch {
-            $errorLine = "| {0,-$nameWidth} | {1,-$statusWidth} |" -f $serviceName, "NOT FOUND"
-            Write-Host $errorLine -ForegroundColor DarkYellow
+            $dots = '.' * ($maxLineLength - $ServiceName.Length)
+            Write-Host "$ServiceName $dots " -NoNewline
+            Write-Host "NOT FOUND" -ForegroundColor Yellow
         }
     }
-
-    Write-Host ("-" * ($nameWidth + $statusWidth + 7))
 }
