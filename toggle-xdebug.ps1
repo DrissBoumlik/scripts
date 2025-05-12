@@ -17,7 +17,7 @@ function Resolve-PathOrEnv {
         if ($resolvedPath -and (Test-Path -Path $resolvedPath)) {
             $inputFileReolved = "$resolvedPath\php.ini"
         } else {
-            Write-Host "Provide a valide environment variable or full path for a php directory !" -BackgroundColor "Yellow"
+            Write-Host "Provide a valide environment variable or full path for a php directory !" -BackgroundColor "DarkYellow"
             exit(0)
         }
     }
@@ -57,7 +57,7 @@ if ($user_activate) {
         Write-Host "Process started to $msg ..."
     } else {
         $msg = If ($user_activate) { "activated" } Else { "deactivated" }
-        Write-Host " xdebug is already $msg " -BackgroundColor Yellow
+        Write-Host " xdebug is already $msg " -BackgroundColor DarkYellow
         exit
     }
 }
@@ -86,10 +86,10 @@ $newContent | Set-Content -Path $phpIniPath
 
 If ($activate) {
     $msg = "activated"
-    $color = "Green"
+    $color = "DarkGreen"
 } Else {
     $msg = "deactivated"
-    $color = "Yellow"
+    $color = "DarkYellow"
 }
 
 Write-Host " xdebug has been $msg " -BackgroundColor $color

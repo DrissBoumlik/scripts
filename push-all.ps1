@@ -11,7 +11,7 @@ param (
 # Get the current branch
 $CurrentBranch = (git branch --show-current).Trim()
 if (-not $CurrentBranch) {
-    Write-Host "Error: Unable to determine the current branch." -ForegroundColor Red
+    Write-Host "Error: Unable to determine the current branch." -ForegroundColor DarkYellow
     exit 1
 }
 
@@ -22,7 +22,7 @@ $RemoteArray = $Remotes -split ","
 
 # Check if the branches parameter is provided
 if (-not $BranchArray -or $BranchArray.Count -eq 0) {
-    Write-Host "Error: Please provide at least one branch to merge into." -ForegroundColor Red
+    Write-Host "Error: Please provide at least one branch to merge into." -ForegroundColor DarkYellow
     exit 1
 }
 
@@ -44,7 +44,7 @@ Push-To-Remote -branch $CurrentBranch -RemoteArray $RemoteArray
 # Iterate over the list of branches
 foreach ($branch in $BranchArray) {
     if ($branch -eq $CurrentBranch) {
-        Write-Host "`nSkipping the current branch '$CurrentBranch'." -ForegroundColor Yellow
+        Write-Host "`nSkipping the current branch '$CurrentBranch'." -ForegroundColor DarkYellow
         continue
     }
     
@@ -62,4 +62,4 @@ foreach ($branch in $BranchArray) {
 Write-Host "`nSwitching back to the original branch '$CurrentBranch'..." -ForegroundColor Cyan
 git checkout $CurrentBranch
 
-Write-Host "Operation completed successfully!" -ForegroundColor Green
+Write-Host "Operation completed successfully!" -ForegroundColor DarkGreen

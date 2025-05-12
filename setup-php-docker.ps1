@@ -213,7 +213,7 @@ foreach ($file in $files.Keys) {
 
 Write-Host "`nDocker environment setup complete!" -ForegroundColor DarkGreen
 
-Write-Host "`nDont't forget to edit the .env and .env.testing files." -ForegroundColor Yellow
+Write-Host "`nDont't forget to edit the .env and .env.testing files." -ForegroundColor DarkYellow
 Write-Host "`nYou can now run the following commands to start your Docker containers:"
 Write-Host "`n> docker-compose build"
 Write-Host "> docker-compose up -d"

@@ -32,8 +32,8 @@ try {
         New-Item -ItemType File -Path $fileFullPath > $null
     }
 
-    Write-Host "File created successfully: $fileFullPath" -ForegroundColor Green
+    Write-Host "File created successfully: $fileFullPath" -ForegroundColor DarkGreen
 } catch {
     # Display a friendly error message
-    Write-Host "Error details: $($_.Exception.Message)" -ForegroundColor Yellow
+    Write-Host "Error details: $($_.Exception.Message)" -ForegroundColor DarkYellow
 }
