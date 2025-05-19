@@ -64,7 +64,6 @@ networks:
 
 volumes:
   mysql_data:
-    driver: local
   vendor_data:
 "@
 }
