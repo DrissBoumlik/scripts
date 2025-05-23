@@ -34,3 +34,14 @@ function Display-Service-Status {
         }
     }
 }
+
+function Display-Output-Message {
+    param($exitCode, $operation)
+
+    if ($exitCode -eq 0) {
+        $message = $messages[$operation]
+        Write-Host "`n$message" -ForegroundColor DarkGreen
+    } else {
+        Write-Host "`nvalet $operation failed with code $exitCode." -ForegroundColor DarkYellow
+    }
+}
