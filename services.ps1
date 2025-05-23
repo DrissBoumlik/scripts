@@ -142,6 +142,21 @@ function Operations {
     $commonKeys | ForEach-Object { Write-Host " - $_" }
 }
 
+function Run-Operation {
+
+    foreach ($serviceName in $serviceNames) {
+        $exitCode = & $services[$serviceName]['actions'][$operation].action
+
+        if ($exitCode -eq 0) {
+            Write-Host $services[$serviceName]['actions'][$operation].success -ForegroundColor DarkGreen
+        } else {
+            Write-Host $services[$serviceName]['actions'][$operation].failure -ForegroundColor DarkYellow
+        }
+    }
+
+    return $exitCode
+}
+
 
 if ($operation -eq "") {
     Write-Host "`nUsage: svc [start|stop|restart|status] [service name]"
@@ -149,12 +164,21 @@ if ($operation -eq "") {
     exit 0
 }
 
-Write-Host "`n"
-
 # Handle list action
 if ($operation -eq "list") {
     Show-Services
     exit 0
+}
+
+if ($operation -eq "status") {
+
+    if ($null -eq $serviceNames -or $serviceNames.Count -eq 0) {
+        $serviceNames = $services.Keys
+    }
+    Write-Host "`n" -NoNewline
+    $exitCode = Run-Operation
+    
+    exit $exitCode
 }
 
 # Validate service
@@ -178,16 +202,9 @@ $serviceNames | ForEach-Object {
 }
 
 # Execute the command
-if (($operation -eq "status") -or (Is-Admin)) {
-    foreach ($serviceName in $serviceNames) {
-        $exitCode = & $services[$serviceName]['actions'][$operation].action
-        if ($exitCode -eq 0) {
-            Write-Host $services[$serviceName]['actions'][$operation].success -ForegroundColor DarkGreen
-        } else {
-            Write-Host $services[$serviceName]['actions'][$operation].failure -ForegroundColor DarkYellow
-        }
-    }
-
+if (Is-Admin) {
+    Write-Host "`n" -NoNewline
+    $exitCode = Run-Operation
     exit $exitCode
 }
 
@@ -199,6 +216,7 @@ try {
     $process.WaitForExit()
     $exitCode = $process.ExitCode
     
+    Write-Host "`n" -NoNewline
     foreach ($serviceName in $serviceNames) {
         if ($exitCode -eq 0) {
             Write-Host $services[$serviceName]['actions'][$operation].success -ForegroundColor DarkGreen
