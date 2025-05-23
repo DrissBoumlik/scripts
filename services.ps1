@@ -123,8 +123,30 @@ $services = [ordered]@{
 
 
 function Show-Services {
-    Write-Host "Supported services:"
+    Write-Host "`nSupported services:"
     $services.Keys | ForEach-Object { Write-Host " - $_" }
+}
+
+function Operations {
+    $commonKeys = $null
+
+    foreach ($service in $services.Values) {
+        $actionKeys = $service["actions"].Keys
+        if ($null -eq $commonKeys) {
+            $commonKeys = $actionKeys
+        } else {
+            $commonKeys = $commonKeys | Where-Object { $actionKeys -contains $_ }
+        }
+    }
+    Write-Host "`nSupported actions:"
+    $commonKeys | ForEach-Object { Write-Host " - $_" }
+}
+
+
+if ($operation -eq "") {
+    Write-Host "`nUsage: svc [start|stop|restart|status] [service name]"
+    Show-Services
+    exit 0
 }
 
 Write-Host "`n"
@@ -136,7 +158,7 @@ if ($operation -eq "list") {
 }
 
 # Validate service
-if ($serviceName -eq "") {
+if ($null -eq $serviceNames -or $serviceNames.Count -eq 0) {
     Write-Host "Provide a valid service name."
     Show-Services
     exit 1
@@ -146,9 +168,11 @@ if ($serviceName -eq "") {
 $serviceNames | ForEach-Object {
     if (-not $services.Contains($_)) {
         Write-Host "Unknown service: $_"
+        Show-Services
         exit 1
     } elseif (-not $services[$_]['actions'].ContainsKey($operation)) {
         Write-Host "Action '$operation' not supported for service '$_'"
+        Operations
         exit 1
     }
 }
