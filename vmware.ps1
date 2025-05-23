@@ -14,17 +14,17 @@ $actions = [ordered]@{
     "start" = @{ action = {
         foreach ($s in $services) { Start-Service -Name $s -ErrorAction SilentlyContinue }
         return $true
-    }; success = "VMware services started."; failure = "Failed to start MariaDB service." }
+    }; success = "VMware services started."; failure = "Failed to start VMware services." }
 
     "stop" = @{ action = {
             foreach ($s in $services) { Stop-Service -Name $s -ErrorAction SilentlyContinue }
             return $true
-    }; success = "VMware services stopped."; failure = "Failed to stop MariaDB service." }
+    }; success = "VMware services stopped."; failure = "Failed to stop VMware services." }
 
     "restart" = @{ action = {
         foreach ($s in $services) { Restart-Service -Name $s -ErrorAction SilentlyContinue }
         return $true
-    }; success = "VMware services restarted."; failure = "Failed to restart MariaDB service." }
+    }; success = "VMware services restarted."; failure = "Failed to restart VMware services." }
 
     "status" = @{ action = {
         Display-Service-Status -servicesNames $services
