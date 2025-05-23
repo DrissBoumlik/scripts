@@ -25,18 +25,6 @@ if ($operation -eq "status") {
 }
 
 
-function Display-Output-Message {
-    param($exitCode, $operation)
-
-    if ($exitCode -eq 0) {
-        $message = $messages[$operation]
-        Write-Host "`n$message" -ForegroundColor DarkGreen
-    } else {
-        Write-Host "`nvalet $operation failed with code $exitCode." -ForegroundColor DarkYellow
-    }
-
-    exit $exitCode
-}
 
 
 # Path to valet.bat
@@ -63,6 +51,7 @@ if (-not (Is-Admin)) {
         
         Display-Output-Message -exitCode $proc.ExitCode -operation $operation
         
+        exit $proc.ExitCode
     } catch {
         Write-Host "`nOups! Admin elevation was cancelled or failed." -ForegroundColor DarkYellow
         exit 1
@@ -88,3 +77,4 @@ $proc.WaitForExit()
 
 
 Display-Output-Message -exitCode $proc.ExitCode -operation $operation
+exit $proc.ExitCode
