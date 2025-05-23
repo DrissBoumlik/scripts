@@ -1,11 +1,10 @@
 param(
-    [string]$operation,
-    [string]$serviceName
+    [string]$operation
 )
 
 . $PSScriptRoot\common\functions.ps1
 
-# $serviceNames = $args
+$serviceNames = $args
 
 # Define services and their commands
 $services = [ordered]@{
@@ -128,6 +127,8 @@ function Show-Services {
     $services.Keys | ForEach-Object { Write-Host " - $_" }
 }
 
+Write-Host "`n"
+
 # Handle list action
 if ($operation -eq "list") {
     Show-Services
@@ -135,42 +136,51 @@ if ($operation -eq "list") {
 }
 
 # Validate service
-if ($serviceName -eq "" -or -not $services.Contains($serviceName)) {
-    Write-Host "Unknown service: $serviceName"
+if ($serviceName -eq "") {
+    Write-Host "Provide a valid service name."
     Show-Services
     exit 1
 }
 
 # Validate action for the service
-if (-not $services[$serviceName]['actions'].ContainsKey($operation)) {
-    Write-Host "Action '$operation' not supported for service '$serviceName'"
-    exit 1
+$serviceNames | ForEach-Object {
+    if (-not $services.Contains($_)) {
+        Write-Host "Unknown service: $_"
+        exit 1
+    } elseif (-not $services[$_]['actions'].ContainsKey($operation)) {
+        Write-Host "Action '$operation' not supported for service '$_'"
+        exit 1
+    }
 }
 
 # Execute the command
 if (($operation -eq "status") -or (Is-Admin)) {
-    $exitCode = & $services[$serviceName]['actions'][$operation].action
-
-    if ($exitCode -eq 0) {
-        Write-Host $services[$serviceName]['actions'][$operation].success -ForegroundColor DarkGreen
-    } else {
-        Write-Host $services[$serviceName]['actions'][$operation].failure -ForegroundColor DarkYellow
+    foreach ($serviceName in $serviceNames) {
+        $exitCode = & $services[$serviceName]['actions'][$operation].action
+        if ($exitCode -eq 0) {
+            Write-Host $services[$serviceName]['actions'][$operation].success -ForegroundColor DarkGreen
+        } else {
+            Write-Host $services[$serviceName]['actions'][$operation].failure -ForegroundColor DarkYellow
+        }
     }
+
     exit $exitCode
 }
 
 
 # Not admin - relaunch as admin
 try {
-    $arguments = "-ExecutionPolicy Bypass -File `"$PSCommandPath`" `"$operation`" `"$serviceName`""
+    $arguments = "-ExecutionPolicy Bypass -File `"$PSCommandPath`" $operation $serviceNames"
     $process = Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden -PassThru  
     $process.WaitForExit()
     $exitCode = $process.ExitCode
     
-    if ($exitCode -eq 0) {
-        Write-Host $services[$serviceName]['actions'][$operation].success -ForegroundColor DarkGreen
-    } else {
-        Write-Host $services[$serviceName]['actions'][$operation].failure -ForegroundColor DarkYellow
+    foreach ($serviceName in $serviceNames) {
+        if ($exitCode -eq 0) {
+            Write-Host $services[$serviceName]['actions'][$operation].success -ForegroundColor DarkGreen
+        } else {
+            Write-Host $services[$serviceName]['actions'][$operation].failure -ForegroundColor DarkYellow
+        }
     }
 
     exit $exitCode
