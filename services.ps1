@@ -183,7 +183,7 @@ if ($operation -eq "status") {
 
 # Validate service
 if ($null -eq $serviceNames -or $serviceNames.Count -eq 0) {
-    Write-Host "Provide a valid service name."
+    Write-Host "`nProvide a valid service name."
     Show-Services
     exit 1
 }
@@ -191,11 +191,11 @@ if ($null -eq $serviceNames -or $serviceNames.Count -eq 0) {
 # Validate action for the service
 $serviceNames | ForEach-Object {
     if (-not $services.Contains($_)) {
-        Write-Host "Unknown service: $_"
+        Write-Host "`nUnknown service: $_"
         Show-Services
         exit 1
     } elseif (-not $services[$_]['actions'].ContainsKey($operation)) {
-        Write-Host "Action '$operation' not supported for service '$_'"
+        Write-Host "`nAction '$operation' not supported for service '$_'"
         Operations
         exit 1
     }
