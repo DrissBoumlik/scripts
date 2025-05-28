@@ -226,8 +226,7 @@ try {
     }
 
     exit $exitCode
-}
-catch {
-    Write-Host "Operation canceled or failed to elevate privileges." -ForegroundColor DarkYellow
+} catch {
+    Write-Host "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow
     exit 1
 }
