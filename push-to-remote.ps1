@@ -14,19 +14,27 @@ $Headers = @{
     "User-Agent" = "$GitHubUsername"
 }
 
-$Body = @{
-    name = $RepoName
-    private = $false
-} | ConvertTo-Json
+try {
+    $Body = @{
+        name = $RepoName
+        private = $false
+    } | ConvertTo-Json
 
-Invoke-RestMethod -Uri $GitHubApiUrl -Method Post -Headers $Headers -Body $Body
+    Invoke-RestMethod -Uri $GitHubApiUrl -Method Post -Headers $Headers -Body $Body
 
-# Add GitHub repository as remote
-git remote add origin "https://github.com/$GitHubUsername/$RepoName.git"
+    # Add GitHub repository as remote
+    git remote add origin "https://github.com/$GitHubUsername/$RepoName.git"
+}
+catch {
+    Write-Host "`nError while creating repository" -ForegroundColor DarkYellow
+}
 
+Write-Host "`nPushing to remote repository: $RepoName"
 # Push to GitHub
 if ($withAllBranches) {
-    git push --all origin
+    git push --all origin > $null 2>&1
 } else {
-    git push -u origin master
+    git push -u origin master > $null 2>&1
 }
+
+Write-Host "`nRepository $RepoName pushed successfully!" -ForegroundColor DarkGreen
