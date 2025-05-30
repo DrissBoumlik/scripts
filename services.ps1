@@ -1,6 +1,4 @@
-param(
-    [string]$operation
-)
+param([string]$operation)
 
 . $PSScriptRoot\common\functions.ps1
 
@@ -8,6 +6,26 @@ $serviceNames = $args
 
 # Define services and their commands
 $services = [ordered]@{
+    "docker" = @{
+        "actions" = @{
+            "start" = @{ action = {
+                Start-Service "com.docker.service" -ErrorAction SilentlyContinue
+                return 0
+            }; success = "Docker service started."; failure = "Failed to start Docker service." }
+            "stop" = @{ action = {
+                Stop-Service "com.docker.service" -ErrorAction SilentlyContinue
+                return 0
+            }; success = "Docker service stopped."; failure = "Failed to stop Docker service." }
+            "restart" = @{ action = {
+                Restart-Service "com.docker.service" -ErrorAction SilentlyContinue
+                return 0
+            }; success = "Docker service restarted."; failure = "Failed to restart Docker service." }
+            "status" = @{ action = {
+                Display-Service-Status -servicesNames @("com.docker.service")
+                return 0
+            }}
+        }
+    }
     "mariadb" = @{
         "actions" = @{
             "start" = @{ action = {
