@@ -14,10 +14,15 @@ function Display-Service-Status {
     foreach ($serviceName in $servicesNames) {
             $serviceNameFormatted = $serviceName
         try {
-            if ($serviceNameFormatted -match '[_-]') {
-                $serviceNameFormatted = ($serviceName -replace '_', ' ' -split ' ' | ForEach-Object {
-                    $_.Substring(0,1).ToUpper() + $_.Substring(1).ToLower()
-                }) -join ' '
+            if ($serviceNameFormatted -match '[_\-.]') {
+                $serviceNameFormatted = (
+                    $serviceName -replace '[_\-.]', ' ' -split ' ' |
+                    ForEach-Object {
+                        if ($_.Length -gt 0) {
+                            $_.Substring(0,1).ToUpper() + $_.Substring(1).ToLower()
+                        }
+                    }
+                ) -join ' '
             }
             $service = Get-Service -Name $serviceName -ErrorAction Stop
             $color = if ($service.Status -eq 'Running') { 'DarkGreen' } else { 'DarkYellow' }
