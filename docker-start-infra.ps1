@@ -1,13 +1,14 @@
-param ([string]$operation, [string]$directory)
+param ([string]$operation)
 
+$directory = (Get-Location).Path
 $sub_directories = $args
 
 if (-not $directory -or -not $operation) {
-    Write-Host "`nUsage: dcstart -directory <directory_name> -operation <start|stop|restart>"
+    Write-Host "`nUsage: dcstart -operation <start|stop|restart>"
     exit 1
 }
 
-if (-not (Test-Path -Path ".\$directory\")) {
+if (-not (Test-Path -Path $directory)) {
     Write-Host "`nDirectory '$directory' does not exist." -ForegroundColor DarkYellow
     exit 1
 }
@@ -17,7 +18,7 @@ if ($operation -notin @('start', 'stop', 'restart')) {
     exit 1
 }
 
-$dirs = Get-ChildItem -Path ".\$directory\" -Directory | Where-Object { -not ($_.Name.StartsWith('.')) }
+$dirs = Get-ChildItem -Path $directory -Directory | Where-Object { -not ($_.Name.StartsWith('.')) }
 
 if ($sub_directories) {
     $sub_directories = $sub_directories | ForEach-Object { $_.TrimEnd('\') }
