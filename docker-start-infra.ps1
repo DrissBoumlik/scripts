@@ -30,8 +30,13 @@ if ($sub_directories) {
     }
 }
 
+if ($dirs.Length -eq 0) {
+    Write-Host "`nNo directories found in '$directory' to process" -ForegroundColor DarkYellow
+    exit 0    
+}
+
 Write-Host "`nDirectories to process in '$directory':" -ForegroundColor Green
-$dirs | ForEach-Object { Write-Host " - $($_.Name)" -ForegroundColor Cyan }
+$dirs | ForEach-Object { Write-Host " - $($_.Name)" }
 
 if (-not $dirs) {
     Write-Host "`nNo subdirectories found in this directory." -ForegroundColor DarkYellow
@@ -43,8 +48,7 @@ $dirs | ForEach-Object {
         Write-Host "`nNo docker-compose.yml found in directory '$($_.Name)'. Skipping." -ForegroundColor DarkYellow
         return
     }
-    Write-Host "`n`nProcessing directory: $($_.Name) ..."
-    Write-Host "Running docker-compose $operation in $($_.Name)`n" -ForegroundColor DarkCyan
+    Write-Host "`n`nRunning docker-compose $operation in $($_.Name)`n" -ForegroundColor DarkCyan
     Push-Location $_.FullName
     docker-compose $operation
     Pop-Location
