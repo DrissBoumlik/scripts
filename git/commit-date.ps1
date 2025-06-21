@@ -8,13 +8,26 @@ param (
     [string]$message
 )
 
+if (-not $date) {
+    Write-Host "Error: Please provide a date in the format 'YYYY-MM-DDTHH:MM:SS'." -ForegroundColor DarkYellow
+    exit 1
+}
 
-$env:GIT_AUTHOR_DATE=$date
-$env:GIT_COMMITTER_DATE=$date
+if (-not $message) {
+    Write-Host "Error: Please provide a commit message." -ForegroundColor DarkYellow
+    exit 1
+}
 
+try {
+    $env:GIT_AUTHOR_DATE=$date
+    $env:GIT_COMMITTER_DATE=$date
 
-git commit -m $message
+    git commit -m $message
 
-
-Remove-Item Env:\GIT_AUTHOR_DATE
-Remove-Item Env:\GIT_COMMITTER_DATE
+    Remove-Item Env:\GIT_AUTHOR_DATE
+    Remove-Item Env:\GIT_COMMITTER_DATE
+}
+catch {
+    Write-Host "Error: Failed to set commit date." -ForegroundColor DarkYellow
+    exit 1
+}
