@@ -1,6 +1,6 @@
 param([string]$operation)
 
-. $PSScriptRoot\common\functions.ps1
+. $PSScriptRoot\..\imports\functions.ps1
 
 $serviceNames = $args
 
