@@ -8,33 +8,23 @@ function Is-Admin {
 }
 
 function Display-Service-Status {
-    param($servicesNames)
+    param($servicesNames, $displayedServiceName)
 
     $maxLineLength = 60
+    Write-Host "$displayedServiceName services:" -ForegroundColor Cyan
     foreach ($serviceName in $servicesNames) {
-            $serviceNameFormatted = $serviceName
         try {
-            if ($serviceNameFormatted -match '[_\-.]') {
-                $serviceNameFormatted = (
-                    $serviceName -replace '[_\-.]', ' ' -split ' ' |
-                    ForEach-Object {
-                        if ($_.Length -gt 0) {
-                            $_.Substring(0,1).ToUpper() + $_.Substring(1).ToLower()
-                        }
-                    }
-                ) -join ' '
-            }
             $service = Get-Service -Name $serviceName -ErrorAction Stop
             $color = if ($service.Status -eq 'Running') { 'DarkGreen' } else { 'DarkYellow' }
-            $dotsCount = $maxLineLength - $serviceNameFormatted.Length
+            $dotsCount = $maxLineLength - $serviceName.Length
             if ($dotsCount -lt 0) { $dotsCount = 0 }
 
             $dots = '.' * $dotsCount
-            Write-Host "$serviceNameFormatted $dots " -NoNewline
+            Write-Host "- $serviceName $dots " -NoNewline
             Write-Host $service.Status -ForegroundColor $color
         } catch {
-            $dots = '.' * ($maxLineLength - $serviceNameFormatted.Length)
-            Write-Host "$serviceNameFormatted $dots " -NoNewline
+            $dots = '.' * ($maxLineLength - $serviceName.Length)
+            Write-Host "$serviceName $dots " -NoNewline
             Write-Host "NOT FOUND" -ForegroundColor Yellow
         }
     }

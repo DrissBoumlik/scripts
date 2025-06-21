@@ -21,7 +21,7 @@ $services = [ordered]@{
                 return 0
             }; success = "Docker service restarted."; failure = "Failed to restart Docker service." }
             "status" = @{ action = {
-                Display-Service-Status -servicesNames @("com.docker.service")
+                Display-Service-Status -servicesNames @("com.docker.service") -displayedServiceName "Docker"
                 return 0
             }}
         }
@@ -41,7 +41,7 @@ $services = [ordered]@{
                 return 0
             }; success = "MariaDB service restarted."; failure = "Failed to restart MariaDB service." }
             "status" = @{ action = {
-                Display-Service-Status -servicesNames @("MariaDB")
+                Display-Service-Status -servicesNames @("MariaDB") -displayedServiceName "MariaDB"
                 return 0
             }}
         }
@@ -61,7 +61,7 @@ $services = [ordered]@{
                 return 0
             }; success = "Postgres service restarted."; failure = "Failed to restart Postgres service." }
             "status" = @{ action = {
-                Display-Service-Status -servicesNames @("postgresql-x64-17")
+                Display-Service-Status -servicesNames @("postgresql-x64-17") -displayedServiceName "Postgres"
                 return 0
             }}
         }
@@ -110,7 +110,7 @@ $services = [ordered]@{
                 return $proc.ExitCode
             }}
             "status" = @{ action = {
-                Display-Service-Status -servicesNames $services["valet"]["list"]
+                Display-Service-Status -servicesNames $services["valet"]["list"] -displayedServiceName "Valet"
                 return 0
             }}
         }
@@ -131,7 +131,7 @@ $services = [ordered]@{
                 return 0
             }; success = "VMware services restarted."; failure = "Failed to restart VMware services." }
             "status" = @{ action = {
-                Display-Service-Status -servicesNames $services["vmware"]["list"]
+                Display-Service-Status -servicesNames $services["vmware"]["list"] -displayedServiceName "VMWare"
                 return 0
             }}
         }
