@@ -10,27 +10,46 @@
 # Parameters:
 param( [string]$variableName, [string]$variableValue )
 
-try {
-	# Check if running as administrator
-	If (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-		# Relaunch as administrator with hidden window
-		$arguments = "-ExecutionPolicy Bypass -File `"$PSCommandPath`" -variableName `"$variableName`" -variableValue `"$variableValue`""
-		Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden
-		exit
-	}
+. $PSScriptRoot\..\imports\functions.ps1
 
-	if ($variableName -and $variableValue) {
+if (-not $variableName -or -not $variableValue) {
+	Write-Host "Error: Please provide both a variable name and value." -ForegroundColor DarkYellow
+	exit 1
+}
+
+try {
+	
+	if (Is-Admin) {
 		$variableValueContent = [System.Environment]::GetEnvironmentVariable($variableValue, [System.EnvironmentVariableTarget]::Machine)
 		if ($variableValueContent) {
 			[System.Environment]::SetEnvironmentVariable($variableName, $variableValueContent, [System.EnvironmentVariableTarget]::Machine)
 		} else {
 			[System.Environment]::SetEnvironmentVariable($variableName, $variableValue, [System.EnvironmentVariableTarget]::Machine)
 		}
-		Write-Host "Environment variable '$variableName' set to '$variableValue' at the system level."
-	} else {
-		Write-Host "Please provide both a variable name and value."
+
+		if ($exitCode -eq 0) {
+			Write-Host "Environment variable '$variableName' set to '$variableValue' at the system level." -ForegroundColor DarkGreen
+		} else {
+			Write-Host "Failed to set environment variable '$variableName'." -ForegroundColor DarkYellow
+		}
+		exit $exitCode
 	}
+
+	# Relaunch as administrator with hidden window
+	$arguments = "-ExecutionPolicy Bypass -File `"$PSCommandPath`" -variableName `"$variableName`" -variableValue `"$variableValue`""
+	$process = Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden -PassThru  
+	$process.WaitForExit()
+	$exitCode = $process.ExitCode
+	
+	if ($exitCode -eq 0) {
+		Write-Host "Environment variable '$variableName' set to '$variableValue' at the system level." -ForegroundColor DarkGreen
+	} else {
+		Write-Host "Failed to set environment variable '$variableName'." -ForegroundColor DarkYellow
+	}
+	exit $exitCode
 } catch {
 	Write-Host "Something went wrong, believe me !!"
+	Write-Host "Error: $_" -ForegroundColor DarkYellow
+	exit 1
 }
 
